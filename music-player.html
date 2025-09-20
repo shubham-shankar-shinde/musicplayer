@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Music Player</title>
+    <style>
+      body {
+        background: #22223b;
+        font-family: "Segoe UI", Arial, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+      }
+      .player {
+        background: #fff;
+        padding: 2rem;
+        border-radius: 16px;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+        width: 350px;
+        text-align: center;
+      }
+      .song-info {
+        margin-bottom: 1rem;
+      }
+      .song-title {
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: #22223b;
+      }
+      .song-artist {
+        font-size: 1rem;
+        color: #4a4e69;
+      }
+      .controls {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+      .controls button {
+        background: #4a4e69;
+        color: #fff;
+        border: none;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        font-size: 1.2rem;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+      .controls button:hover {
+        background: #9a8c98;
+      }
+      .progress-container {
+        width: 100%;
+        margin: 1rem 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .progress-bar {
+        flex: 1;
+        height: 6px;
+        background: #e9ecef;
+        border-radius: 3px;
+        cursor: pointer;
+        position: relative;
+      }
+      .progress {
+        height: 100%;
+        background: #4a4e69;
+        border-radius: 3px;
+        width: 0%;
+        position: absolute;
+        top: 0;
+        left: 0;
+      }
+      .time {
+        font-size: 0.9rem;
+        color: #22223b;
+        min-width: 40px;
+        text-align: center;
+      }
+      .volume-container {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+      }
+      .playlist {
+        margin-top: 1rem;
+        text-align: left;
+        max-height: 120px;
+        overflow-y: auto;
+      }
+      .playlist-item {
+        padding: 0.5rem;
+        cursor: pointer;
+        border-radius: 6px;
+        margin-bottom: 2px;
+        transition: background 0.2s;
+      }
+      .playlist-item.active,
+      .playlist-item:hover {
+        background: #f2e9e4;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="player">
+      <div class="song-info">
+        <div class="song-title" id="song-title">Song Title</div>
+        <div class="song-artist" id="song-artist">Artist</div>
+      </div>
+      <audio id="audio"></audio>
+      <div class="controls">
+        <button id="prev">&#9664;</button>
+        <button id="play">&#9654;</button>
+        <button id="pause">&#10073;&#10073;</button>
+        <button id="next">&#9654;&#9654;</button>
+      </div>
+      <div class="progress-container">
+        <span class="time" id="current-time">0:00</span>
+        <div class="progress-bar" id="progress-bar">
+          <div class="progress" id="progress"></div>
+        </div>
+        <span class="time" id="duration">0:00</span>
+      </div>
+      <div class="volume-container">
+        <label for="volume">🔊</label>
+        <input
+          type="range"
+          id="volume"
+          min="0"
+          max="1"
+          step="0.01"
+          value="0.7"
+        />
+      </div>
+      <div class="playlist" id="playlist"></div>
+    </div>
+    <script>
+      // Playlist data (replace with your own mp3 URLs)
+      const songs = [
+        {
+          title: "Acoustic Breeze",
+          artist: "Benjamin Tissot",
+          url: "https://www.bensound.com/bensound-music/bensound-acousticbreeze.mp3",
+        },
+        {
+          title: "Creative Minds",
+          artist: "Benjamin Tissot",
+          url: "https://www.bensound.com/bensound-music/bensound-creativeminds.mp3",
+        },
+        {
+          title: "Sunny",
+          artist: "Benjamin Tissot",
+          url: "https://www.bensound.com/bensound-music/bensound-sunny.mp3",
+        },
+      ];
+
+      let currentSong = 0;
+      let isPlaying = false;
+      const audio = document.getElementById("audio");
+      const playBtn = document.getElementById("play");
+      const pauseBtn = document.getElementById("pause");
+      const nextBtn = document.getElementById("next");
+      const prevBtn = document.getElementById("prev");
+      const songTitle = document.getElementById("song-title");
+      const songArtist = document.getElementById("song-artist");
+      const currentTimeEl = document.getElementById("current-time");
+      const durationEl = document.getElementById("duration");
+      const progressBar = document.getElementById("progress-bar");
+      const progress = document.getElementById("progress");
+      const volumeSlider = document.getElementById("volume");
+      const playlistEl = document.getElementById("playlist");
+
+      function loadSong(index, autoplay = false) {
+        const song = songs[index];
+        audio.src = song.url;
+        songTitle.textContent = song.title;
+        songArtist.textContent = song.artist;
+        updatePlaylist();
+        if (autoplay) {
+          audio.play();
+          isPlaying = true;
+        } else {
+          isPlaying = false;
+        }
+      }
+
+      function updatePlaylist() {
+        playlistEl.innerHTML = "";
+        songs.forEach((song, idx) => {
+          const item = document.createElement("div");
+          item.className =
+            "playlist-item" + (idx === currentSong ? " active" : "");
+          item.textContent = `${song.title} - ${song.artist}`;
+          item.onclick = () => {
+            currentSong = idx;
+            loadSong(currentSong, true);
+          };
+          playlistEl.appendChild(item);
+        });
+      }
+
+      function playSong() {
+        audio.play();
+        isPlaying = true;
+      }
+
+      function pauseSong() {
+        audio.pause();
+        isPlaying = false;
+      }
+
+      function nextSong() {
+        currentSong = (currentSong + 1) % songs.length;
+        loadSong(currentSong, true);
+      }
+
+      function prevSong() {
+        currentSong = (currentSong - 1 + songs.length) % songs.length;
+        loadSong(currentSong, true);
+      }
+
+      playBtn.onclick = playSong;
+      pauseBtn.onclick = pauseSong;
+      nextBtn.onclick = nextSong;
+      prevBtn.onclick = prevSong;
+
+      audio.onloadedmetadata = () => {
+        durationEl.textContent = formatTime(audio.duration);
+      };
+
+      audio.ontimeupdate = () => {
+        currentTimeEl.textContent = formatTime(audio.currentTime);
+        durationEl.textContent = formatTime(audio.duration);
+        const percent = (audio.currentTime / audio.duration) * 100;
+        progress.style.width = percent + "%";
+      };
+
+      progressBar.onclick = (e) => {
+        const rect = progressBar.getBoundingClientRect();
+        const percent = (e.clientX - rect.left) / rect.width;
+        audio.currentTime = percent * audio.duration;
+      };
+
+      volumeSlider.oninput = () => {
+        audio.volume = volumeSlider.value;
+      };
+
+      audio.onended = () => {
+        nextSong(); // Autoplay next song
+      };
+
+      function formatTime(sec) {
+        if (isNaN(sec)) return "0:00";
+        const m = Math.floor(sec / 60);
+        const s = Math.floor(sec % 60);
+        return `${m}:${s.toString().padStart(2, "0")}`;
+      }
+
+      // Keyboard support
+      document.addEventListener("keydown", (e) => {
+        if (e.code === "Space") {
+          isPlaying ? pauseSong() : playSong();
+          e.preventDefault();
+        } else if (e.code === "ArrowRight") {
+          nextSong();
+        } else if (e.code === "ArrowLeft") {
+          prevSong();
+        }
+      });
+
+      // Initial load
+      loadSong(currentSong);
+    </script>
+  </body>
+</html>
